@@ -9,7 +9,7 @@ type StoryUsecase struct {
 	storyRepo model.IStoryRepository
 }
 
-func NewStoryUsecase(storyRepo model.IStoryRepository) IStoryUsecase {
+func NewStoryUsecase(storyRepo model.IStoryRepository) model.IStoryUsecase {
 	return &StoryUsecase{
 		storyRepo: storyRepo,
 	}

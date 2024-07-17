@@ -10,6 +10,14 @@ type IStoryRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
+type IStoryUsecase interface {
+	FindAll(ctx context.Context, filter StoryFilter) ([]*Story, error)
+	FindById(ctx context.Context, id int64) (*Story, error)
+	Create(ctx context.Context, in CreateStoryInput) error
+	Update(ctx context.Context, in UpdateStoryInput) error
+	Delete(ctx context.Context, id int64) error
+}
+
 type Story struct {
 	Id      int64  `json:"id"`
 	Title   string `json:"title"`

@@ -33,7 +33,10 @@ func httpServer(cmd *cobra.Command, args []string) {
 	defer db.Close()
 
 	storyRepo := repository.NewStoryRepository(db)
+	userRepo := repository.NewUserRepository(db)
+
 	storyUsecase := usecase.NewStoryUsecase(storyRepo)
+	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Create a new Echo instance
 	e := echo.New()
@@ -41,6 +44,8 @@ func httpServer(cmd *cobra.Command, args []string) {
 	routeGroup := e.Group("/api/v1")
 
 	handlerHttp.NewStoryHandler(routeGroup, storyUsecase)
+
+	handlerHttp.NewUserHandler(routeGroup, userUsecase)
 
 	e.Logger.Fatal(e.Start(":3200"))
 }
