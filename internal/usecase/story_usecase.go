@@ -3,14 +3,13 @@ package usecase
 import (
 	"context"
 	"kodinggo/internal/model"
-	"kodinggo/internal/repository"
 )
 
 type StoryUsecase struct {
-	storyRepo repository.IStoryRepository
+	storyRepo model.IStoryRepository
 }
 
-func NewStoryUsecase(storyRepo repository.IStoryRepository) IStoryUsecase {
+func NewStoryUsecase(storyRepo model.IStoryRepository) IStoryUsecase {
 	return &StoryUsecase{
 		storyRepo: storyRepo,
 	}
@@ -21,6 +20,7 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 	if err != nil {
 		return nil, err
 	}
+
 	return stories, nil
 }
 
@@ -43,6 +43,7 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 
 func (s *StoryUsecase) Update(ctx context.Context, in model.UpdateStoryInput) error {
 	story := model.Story{
+		Id:      in.Id,
 		Title:   in.Title,
 		Content: in.Content,
 	}

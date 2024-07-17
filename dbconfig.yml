@@ -1,0 +1,4 @@
+development:
+  dialect: mysql
+  datasource: root:root@tcp(localhost:3306)/kodinggo?parseTime=true
+  dir: db/migrations

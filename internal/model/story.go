@@ -1,9 +1,19 @@
 package model
 
+import "context"
+
+type IStoryRepository interface {
+	FindAll(ctx context.Context, filter StoryFilter) ([]*Story, error)
+	FindById(ctx context.Context, id int64) (*Story, error)
+	Create(ctx context.Context, story Story) error
+	Update(ctx context.Context, story Story) error
+	Delete(ctx context.Context, id int64) error
+}
+
 type Story struct {
-	Id      int64
-	Title   string
-	Content string
+	Id      int64  `json:"id"`
+	Title   string `json:"title"`
+	Content string `json:"content"`
 }
 
 type StoryFilter struct {
@@ -17,6 +27,7 @@ type CreateStoryInput struct {
 }
 
 type UpdateStoryInput struct {
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
