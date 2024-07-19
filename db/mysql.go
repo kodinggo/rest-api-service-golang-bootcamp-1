@@ -16,6 +16,12 @@ func NewMysql() *sql.DB {
 		log.Fatal(err)
 	}
 
+	// Check database connection
+	err = db.Ping()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	return db
 }
 
