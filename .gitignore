@@ -1,2 +1,3 @@
 .env
-contoh.gp
+config.yml
+app.log

@@ -2,13 +2,13 @@ package console
 
 import (
 	"kodinggo/db"
+	"kodinggo/internal/config"
 	handlerHttp "kodinggo/internal/delivery/http"
 	"kodinggo/internal/repository"
 	"kodinggo/internal/usecase"
-	"log"
 
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -24,10 +24,8 @@ var serverCmd = &cobra.Command{
 
 func httpServer(cmd *cobra.Command, args []string) {
 	// Get env variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	config.LoadWithViper()
+	log := config.SetupLogger()
 
 	db := db.NewMysql()
 	defer db.Close()
@@ -35,11 +33,13 @@ func httpServer(cmd *cobra.Command, args []string) {
 	storyRepo := repository.NewStoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 
-	storyUsecase := usecase.NewStoryUsecase(storyRepo)
-	userUsecase := usecase.NewUserUsecase(userRepo)
+	storyUsecase := usecase.NewStoryUsecase(storyRepo, log)
+	userUsecase := usecase.NewUserUsecase(userRepo, log)
 
 	// Create a new Echo instance
 	e := echo.New()
+	e.Use(echoMiddleware.Recover())
+	e.Use(echoMiddleware.Logger())
 
 	routeGroup := e.Group("/api/v1")
 

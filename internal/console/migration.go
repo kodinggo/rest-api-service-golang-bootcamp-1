@@ -2,11 +2,13 @@ package console
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	migrate "github.com/rubenv/sql-migrate"
 	"github.com/spf13/cobra"
+
+	"kodinggo/internal/config"
+	"kodinggo/internal/helper"
 )
 
 var (
@@ -28,24 +30,9 @@ var migrationCMD = &cobra.Command{
 }
 
 func migrateDB(cmd *cobra.Command, args []string) {
-	// db environment
-	var (
-		dbUsername = "root"
-		dbPassword = "root"
-		dbName     = "kodinggo"
-		dbHost     = "localhost:3306"
-	)
+	config.LoadWithViper()
 
-	// prepare connection string
-	// charset=utf8mb4 agar dapat menyimpan semua karakter unicode
-	// parseTime=true agar dapat diparsing dari timestamp ke tipe time.Time
-	connStr := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=true",
-		dbUsername,
-		dbPassword,
-		dbHost,
-		dbName)
-
-	connDB, err := sql.Open("mysql", connStr)
+	connDB, err := sql.Open("mysql", helper.GetConnectionString())
 	if err != nil {
 		log.Panicf("failed to connect server db, error: %s", err.Error())
 	}

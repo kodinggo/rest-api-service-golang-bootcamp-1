@@ -1,0 +1,10 @@
+server:
+  port: 3200
+database:
+  user: myuser
+  password: mypassword
+  host: localhost
+  port: 3306
+  dbname: mydatabase
+jwt:
+  secret: k0d1ngg0

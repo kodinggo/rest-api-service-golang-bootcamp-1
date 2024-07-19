@@ -2,9 +2,9 @@ package handler
 
 import (
 	"errors"
+	"kodinggo/internal/config"
 	"kodinggo/internal/model"
 	"net/http"
-	"os"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
@@ -84,7 +84,7 @@ func (u *UserHandler) Login(c echo.Context) error {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	t, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	t, err := token.SignedString([]byte(config.GetJwtSecret()))
 	if err != nil {
 		return err
 	}
