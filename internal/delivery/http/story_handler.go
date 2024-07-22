@@ -21,7 +21,7 @@ func NewStoryHandler(e *echo.Group, us model.IStoryUsecase) {
 	stories := e.Group("/stories")
 
 	// protected with jwt
-	stories.Use(echojwt.WithConfig(jwtConfig))
+	stories.Use(echojwt.WithConfig(jwtConfig()))
 
 	stories.GET("", handlers.GetStories)
 	stories.GET("/:id", handlers.GetStory)
@@ -31,6 +31,21 @@ func NewStoryHandler(e *echo.Group, us model.IStoryUsecase) {
 }
 
 func (s *StoryHandler) GetStories(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
+	if claims.Role != "admin" {
+		return c.JSON(http.StatusForbidden, response{
+			Status:  http.StatusForbidden,
+			Message: "forbidden",
+		})
+	}
+
 	// Get query string limit and offset
 	reqLimit := c.QueryParam("limit")
 	reqOffset := c.QueryParam("offset")
@@ -53,13 +68,22 @@ func (s *StoryHandler) GetStories(c echo.Context) error {
 			Message: err.Error(),
 		})
 	}
-	return c.JSON(200, response{
+	return c.JSON(http.StatusOK, response{
+		Status:  http.StatusOK,
 		Message: "success",
 		Data:    stories,
 	})
 }
 
 func (s *StoryHandler) GetStory(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
 	id := c.Param("id")
 	parsedId, err := strconv.Atoi(id)
 	if err != nil {
@@ -78,12 +102,21 @@ func (s *StoryHandler) GetStory(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, response{
+		Status:  http.StatusOK,
 		Message: "success",
 		Data:    story,
 	})
 }
 
 func (s *StoryHandler) CreateStory(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
 	var in model.CreateStoryInput
 	if err := c.Bind(&in); err != nil {
 		return c.JSON(http.StatusBadRequest, response{
@@ -104,6 +137,14 @@ func (s *StoryHandler) CreateStory(c echo.Context) error {
 }
 
 func (s *StoryHandler) UpdateStory(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
 	storyId := c.Param("id")
 	parsedId, err := strconv.Atoi(storyId)
 	if err != nil {
@@ -138,6 +179,14 @@ func (s *StoryHandler) UpdateStory(c echo.Context) error {
 }
 
 func (s *StoryHandler) DeleteStory(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
 	id := c.Param("id")
 	parsedId, err := strconv.Atoi(id)
 	if err != nil {

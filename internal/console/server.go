@@ -8,7 +8,6 @@ import (
 	"kodinggo/internal/usecase"
 
 	"github.com/labstack/echo/v4"
-	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/spf13/cobra"
 )
 
@@ -25,7 +24,6 @@ var serverCmd = &cobra.Command{
 func httpServer(cmd *cobra.Command, args []string) {
 	// Get env variables from .env file
 	config.LoadWithViper()
-	log := config.SetupLogger()
 
 	db := db.NewMysql()
 	defer db.Close()
@@ -33,13 +31,13 @@ func httpServer(cmd *cobra.Command, args []string) {
 	storyRepo := repository.NewStoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 
-	storyUsecase := usecase.NewStoryUsecase(storyRepo, log)
-	userUsecase := usecase.NewUserUsecase(userRepo, log)
+	storyUsecase := usecase.NewStoryUsecase(storyRepo)
+	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Create a new Echo instance
 	e := echo.New()
-	e.Use(echoMiddleware.Recover())
-	e.Use(echoMiddleware.Logger())
+	// e.Use(echoMiddleware.Recover())
+	// e.Use(echoMiddleware.Logger())
 
 	routeGroup := e.Group("/api/v1")
 

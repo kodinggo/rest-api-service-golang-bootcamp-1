@@ -9,6 +9,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// NewMysql is a function to initialize the MySQL database.
 func NewMysql() *sql.DB {
 	// Initialize the database
 	db, err := sql.Open("mysql", helper.GetConnectionString())

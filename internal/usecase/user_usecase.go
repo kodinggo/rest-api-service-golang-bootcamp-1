@@ -8,12 +8,10 @@ import (
 
 type UserUsecase struct {
 	userRepo model.IUserRepository
-	log      *logrus.Logger
 }
 
 func NewUserUsecase(
 	userRepo model.IUserRepository,
-	log *logrus.Logger,
 ) model.IUserUsecase {
 	return &UserUsecase{
 		userRepo: userRepo,
@@ -21,7 +19,7 @@ func NewUserUsecase(
 }
 
 func (u *UserUsecase) Create(user model.User) error {
-	log := u.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"user": user,
 	})
 
@@ -34,8 +32,10 @@ func (u *UserUsecase) Create(user model.User) error {
 	return nil
 }
 
+// Login is a usecase to login a user
+// It will return a user and an error
 func (u *UserUsecase) Login(username string, password string) (model.User, error) {
-	log := u.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"username": username,
 		"password": password,
 	})
@@ -47,15 +47,16 @@ func (u *UserUsecase) Login(username string, password string) (model.User, error
 	}
 
 	if !user.IsPasswordMatch(password) {
-		log.Error(err)
+		log.Error(model.ErrInvalidPassword)
 		return model.User{}, model.ErrInvalidPassword
 	}
 
 	return user, nil
 }
 
+// FindByUsername is a usecase to find a user by username
 func (u *UserUsecase) FindByUsername(username string) (model.User, error) {
-	log := u.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"username": username,
 	})
 

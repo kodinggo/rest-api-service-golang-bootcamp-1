@@ -2,11 +2,10 @@ package handler
 
 import (
 	"errors"
-	"kodinggo/internal/config"
 	"kodinggo/internal/model"
 	"net/http"
 
-	"github.com/golang-jwt/jwt/v5"
+	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
 
@@ -21,6 +20,11 @@ func NewUserHandler(e *echo.Group, userUsecase model.IUserUsecase) {
 
 	e.POST("/users", userHandler.Create)
 	e.POST("/users/login", userHandler.Login)
+
+	protected := e.Group("/users/profile")
+	protected.Use(echojwt.WithConfig(jwtConfig()))
+
+	protected.GET("", userHandler.GetProfile)
 }
 
 func (u *UserHandler) Create(c echo.Context) error {
@@ -76,22 +80,43 @@ func (u *UserHandler) Login(c echo.Context) error {
 		})
 	}
 
-	claims := &jwtCustomClaims{
-		user.Id,
-		user.Username,
-		jwt.RegisteredClaims{},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	t, err := token.SignedString([]byte(config.GetJwtSecret()))
+	// "admin" is hardcoded as the role
+	// in a real application, the role should be fetched from the database
+	token, err := signJwtToken(user.Id, user.Username, "admin")
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusOK, response{
 		Status:  http.StatusOK,
 		Message: "success",
-		Data:    map[string]string{"token": t},
+		Data:    map[string]string{"token": token},
+	})
+}
+
+func (u *UserHandler) GetProfile(c echo.Context) error {
+	claims := claimSession(c)
+	if claims == nil {
+		return c.JSON(http.StatusUnauthorized, response{
+			Status:  http.StatusUnauthorized,
+			Message: "unauthorized",
+		})
+	}
+
+	user, err := u.userUsecase.FindByUsername(claims.Username)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, response{
+			Status:  http.StatusInternalServerError,
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, response{
+		Status:  http.StatusOK,
+		Message: "success",
+		Data:    user,
 	})
 }

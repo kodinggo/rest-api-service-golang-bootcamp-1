@@ -7,23 +7,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// StoryUsecase :nodoc:
 type StoryUsecase struct {
 	storyRepo model.IStoryRepository
-	log       *logrus.Logger
 }
 
+// NewStoryUsecase :nodoc:
 func NewStoryUsecase(
 	storyRepo model.IStoryRepository,
-	log *logrus.Logger,
 ) model.IStoryUsecase {
 	return &StoryUsecase{
 		storyRepo: storyRepo,
-		log:       log,
 	}
 }
 
+// FindAll :nodoc:
 func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([]*model.Story, error) {
-	log := s.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"ctx":    ctx,
 		"limit":  filter.Limit,
 		"offset": filter.Offset,
@@ -38,8 +38,9 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 	return stories, nil
 }
 
+// FindById :nodoc:
 func (s *StoryUsecase) FindById(ctx context.Context, id int64) (*model.Story, error) {
-	log := s.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"ctx": ctx,
 		"id":  id,
 	})
@@ -53,7 +54,7 @@ func (s *StoryUsecase) FindById(ctx context.Context, id int64) (*model.Story, er
 }
 
 func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) error {
-	log := s.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"ctx":     ctx,
 		"title":   in.Title,
 		"content": in.Content,
@@ -74,7 +75,7 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 }
 
 func (s *StoryUsecase) Update(ctx context.Context, in model.UpdateStoryInput) error {
-	log := s.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"ctx":     ctx,
 		"id":      in.Id,
 		"title":   in.Title,
@@ -97,7 +98,7 @@ func (s *StoryUsecase) Update(ctx context.Context, in model.UpdateStoryInput) er
 }
 
 func (s *StoryUsecase) Delete(ctx context.Context, id int64) error {
-	log := s.log.WithFields(logrus.Fields{
+	log := logrus.WithFields(logrus.Fields{
 		"ctx": ctx,
 		"id":  id,
 	})

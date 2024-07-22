@@ -2,6 +2,7 @@ package model
 
 import "context"
 
+// IStoryRepository :nodoc:
 type IStoryRepository interface {
 	FindAll(ctx context.Context, filter StoryFilter) ([]*Story, error)
 	FindById(ctx context.Context, id int64) (*Story, error)
@@ -10,6 +11,7 @@ type IStoryRepository interface {
 	Delete(ctx context.Context, id int64) error
 }
 
+// IStoryUsecase :nodoc:
 type IStoryUsecase interface {
 	FindAll(ctx context.Context, filter StoryFilter) ([]*Story, error)
 	FindById(ctx context.Context, id int64) (*Story, error)
@@ -18,12 +20,14 @@ type IStoryUsecase interface {
 	Delete(ctx context.Context, id int64) error
 }
 
+// Story represents a story model
 type Story struct {
 	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }
 
+// StoryFilter represent struct for story filter
 type StoryFilter struct {
 	Offset int32
 	Limit  int32
