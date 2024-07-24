@@ -4,6 +4,8 @@ import (
 	"context"
 	"kodinggo/internal/model"
 
+	"github.com/go-playground/validator/v10"
+	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 )
 
@@ -11,6 +13,8 @@ import (
 type StoryUsecase struct {
 	storyRepo model.IStoryRepository
 }
+
+var v = validator.New()
 
 // NewStoryUsecase :nodoc:
 func NewStoryUsecase(
@@ -60,12 +64,18 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 		"content": in.Content,
 	})
 
+	err := s.validateCreateStoryInput(ctx, in)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
 	story := model.Story{
 		Title:   in.Title,
 		Content: in.Content,
 	}
 
-	err := s.storyRepo.Create(ctx, story)
+	err = s.storyRepo.Create(ctx, story)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -82,13 +92,20 @@ func (s *StoryUsecase) Update(ctx context.Context, in model.UpdateStoryInput) er
 		"content": in.Content,
 	})
 
-	story := model.Story{
-		Id:      in.Id,
-		Title:   in.Title,
-		Content: in.Content,
+	err := s.validateUpdateStoryInput(ctx, in)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
 
-	err := s.storyRepo.Update(ctx, story)
+	newStory := model.Story{
+		Id:          in.Id,
+		Title:       in.Title,
+		Content:     in.Content,
+		PublishedAt: in.PublishedAt,
+	}
+
+	err = s.storyRepo.Update(ctx, newStory)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -107,6 +124,35 @@ func (s *StoryUsecase) Delete(ctx context.Context, id int64) error {
 	if err != nil {
 		log.Error(err)
 		return err
+	}
+
+	return nil
+}
+
+func (s *StoryUsecase) validateCreateStoryInput(ctx context.Context, in model.CreateStoryInput) error {
+	err := v.StructCtx(ctx, in)
+	if err != nil {
+		log.Error(err)
+		return model.ErrInvalidInput
+	}
+
+	return nil
+}
+
+func (s *StoryUsecase) validateUpdateStoryInput(ctx context.Context, in model.UpdateStoryInput) error {
+	err := v.Struct(in)
+	if err != nil {
+		log.Error(err)
+		return model.ErrInvalidInput
+	}
+
+	story, err := s.storyRepo.FindById(ctx, in.Id)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	if in.PublishedAt.Before(story.CreatedAt) {
+		return model.ErrPublishedAtLessThanCreatedAt
 	}
 
 	return nil
