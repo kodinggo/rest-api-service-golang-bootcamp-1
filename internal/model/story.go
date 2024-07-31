@@ -36,6 +36,15 @@ type Story struct {
 	Content     string     `json:"content"`
 	PublishedAt *time.Time `json:"published_at"`
 	CreatedAt   time.Time  `json:"created_at,omitempty"`
+	Comments    []Comment  `json:"comments"`
+}
+
+type Comment struct {
+	Id        string `json:"id"`
+	StoryId   string `json:"story_id"`
+	Content   string `json:"content"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }
 
 // StoryFilter represent struct for story filter

@@ -3,15 +3,19 @@ package usecase
 import (
 	"context"
 	"kodinggo/internal/model"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
+
+	pb "github.com/kodinggo/comment-service-gb1/pb/comment"
 )
 
 // StoryUsecase :nodoc:
 type StoryUsecase struct {
-	storyRepo model.IStoryRepository
+	storyRepo      model.IStoryRepository
+	commentService pb.CommentServiceClient
 }
 
 var v = validator.New()
@@ -19,9 +23,11 @@ var v = validator.New()
 // NewStoryUsecase :nodoc:
 func NewStoryUsecase(
 	storyRepo model.IStoryRepository,
+	commentService pb.CommentServiceClient,
 ) model.IStoryUsecase {
 	return &StoryUsecase{
-		storyRepo: storyRepo,
+		storyRepo:      storyRepo,
+		commentService: commentService,
 	}
 }
 
@@ -37,6 +43,31 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 	if err != nil {
 		log.Error(err)
 		return nil, err
+	}
+
+	// getting comments from comment service
+	for _, story := range stories {
+		idReq := strconv.Itoa(int(story.Id))
+
+		commentFilter := pb.CommentRequest{
+			StoryId: idReq,
+		}
+
+		comments, err := s.commentService.FindComments(ctx, &commentFilter)
+		if err != nil {
+			log.Error(err)
+			return nil, err
+		}
+
+		for _, comment := range comments.Comments {
+			story.Comments = append(story.Comments, model.Comment{
+				Id:        comment.Id,
+				StoryId:   comment.StoryId,
+				Content:   comment.Content,
+				CreatedAt: comment.CreatedAt,
+				UpdatedAt: comment.UpdatedAt,
+			})
+		}
 	}
 
 	return stories, nil

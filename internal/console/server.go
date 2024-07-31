@@ -6,9 +6,14 @@ import (
 	handlerHttp "kodinggo/internal/delivery/http"
 	"kodinggo/internal/repository"
 	"kodinggo/internal/usecase"
+	"log"
 
 	"github.com/labstack/echo/v4"
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	pb "github.com/kodinggo/comment-service-gb1/pb/comment"
 )
 
 func init() {
@@ -31,7 +36,9 @@ func httpServer(cmd *cobra.Command, args []string) {
 	storyRepo := repository.NewStoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
 
-	storyUsecase := usecase.NewStoryUsecase(storyRepo)
+	commentService := newCommentClientGRPC()
+
+	storyUsecase := usecase.NewStoryUsecase(storyRepo, commentService)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Create a new Echo instance
@@ -46,4 +53,17 @@ func httpServer(cmd *cobra.Command, args []string) {
 	handlerHttp.NewUserHandler(routeGroup, userUsecase)
 
 	e.Logger.Fatal(e.Start(":3200"))
+}
+
+func newCommentClientGRPC() pb.CommentServiceClient {
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}
+
+	conn, err := grpc.NewClient("localhost:3100", opts...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return pb.NewCommentServiceClient(conn)
 }
