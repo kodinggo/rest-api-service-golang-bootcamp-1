@@ -4,18 +4,21 @@ import (
 	"context"
 	"kodinggo/internal/model"
 	"strconv"
+	"sync"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 
-	pb "github.com/kodinggo/comment-service-gb1/pb/comment"
+	pbCategory "github.com/kodinggo/category-service-gb1/pb/category"
+	pbComment "github.com/kodinggo/comment-service-gb1/pb/comment"
 )
 
 // StoryUsecase :nodoc:
 type StoryUsecase struct {
-	storyRepo      model.IStoryRepository
-	commentService pb.CommentServiceClient
+	storyRepo       model.IStoryRepository
+	commentService  pbComment.CommentServiceClient
+	categoryService pbCategory.CategoryServiceClient
 }
 
 var v = validator.New()
@@ -23,11 +26,13 @@ var v = validator.New()
 // NewStoryUsecase :nodoc:
 func NewStoryUsecase(
 	storyRepo model.IStoryRepository,
-	commentService pb.CommentServiceClient,
+	commentService pbComment.CommentServiceClient,
+	categoryService pbCategory.CategoryServiceClient,
 ) model.IStoryUsecase {
 	return &StoryUsecase{
-		storyRepo:      storyRepo,
-		commentService: commentService,
+		storyRepo:       storyRepo,
+		commentService:  commentService,
+		categoryService: categoryService,
 	}
 }
 
@@ -45,29 +50,54 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 		return nil, err
 	}
 
+	var wg sync.WaitGroup
 	// getting comments from comment service
-	for _, story := range stories {
-		idReq := strconv.Itoa(int(story.Id))
+	for idx, story := range stories {
+		wg.Add(1)
+		go func(idx int, story *model.Story) {
+			defer wg.Done()
 
-		commentFilter := pb.CommentRequest{
-			StoryId: idReq,
-		}
+			idReq := strconv.Itoa(int(story.Id))
 
-		comments, err := s.commentService.FindComments(ctx, &commentFilter)
-		if err != nil {
-			log.Error(err)
-			return nil, err
-		}
+			commentFilter := pbComment.CommentRequest{
+				StoryId: idReq,
+			}
 
-		for _, comment := range comments.Comments {
-			story.Comments = append(story.Comments, model.Comment{
-				Id:        comment.Id,
-				StoryId:   comment.StoryId,
-				Content:   comment.Content,
-				CreatedAt: comment.CreatedAt,
-				UpdatedAt: comment.UpdatedAt,
-			})
-		}
+			comments, err := s.commentService.FindComments(ctx, &commentFilter)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+
+			for _, comment := range comments.Comments {
+				story.Comments = append(story.Comments, model.Comment{
+					Id:        comment.Id,
+					StoryId:   comment.StoryId,
+					Content:   comment.Content,
+					CreatedAt: comment.CreatedAt,
+					UpdatedAt: comment.UpdatedAt,
+				})
+			}
+		}(idx, story)
+
+		wg.Add(1)
+		go func(idx int, story *model.Story) {
+			defer wg.Done()
+			categoryId := strconv.Itoa(int(story.CategoryId))
+
+			category, err := s.categoryService.FindCategoryById(ctx, &pbCategory.CategoryRequest{Id: categoryId})
+			if err != nil {
+				log.Error(err)
+				return
+			}
+
+			stories[idx].Category = &model.Category{
+				Id:   story.CategoryId,
+				Name: category.Name,
+			}
+		}(idx, story)
+
+		wg.Wait()
 	}
 
 	return stories, nil

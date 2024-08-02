@@ -15,7 +15,7 @@ func NewStoryRepository(db *sql.DB) model.IStoryRepository {
 }
 
 func (s *StoryRepository) FindAll(ctx context.Context, filter model.StoryFilter) ([]*model.Story, error) {
-	res, err := s.db.QueryContext(ctx, "SELECT id, title, content, published_at, created_at FROM stories LIMIT ? OFFSET ?", filter.Limit, filter.Offset)
+	res, err := s.db.QueryContext(ctx, "SELECT id, title, content, category_id, published_at, created_at FROM stories LIMIT ? OFFSET ?", filter.Limit, filter.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -23,7 +23,7 @@ func (s *StoryRepository) FindAll(ctx context.Context, filter model.StoryFilter)
 	var stories []*model.Story
 	for res.Next() {
 		var story model.Story
-		if err := res.Scan(&story.Id, &story.Title, &story.Content, &story.PublishedAt, &story.CreatedAt); err != nil {
+		if err := res.Scan(&story.Id, &story.Title, &story.Content, &story.CategoryId, &story.PublishedAt, &story.CreatedAt); err != nil {
 			return nil, err
 		}
 		stories = append(stories, &story)
@@ -33,14 +33,14 @@ func (s *StoryRepository) FindAll(ctx context.Context, filter model.StoryFilter)
 }
 
 func (s *StoryRepository) FindById(ctx context.Context, id int64) (*model.Story, error) {
-	res, err := s.db.QueryContext(ctx, "SELECT id, title, content, published_at, created_at FROM stories WHERE id=?", id)
+	res, err := s.db.QueryContext(ctx, "SELECT id, title, content, category_id, published_at, created_at FROM stories WHERE id=?", id)
 	if err != nil {
 		return nil, err
 	}
 
 	var story model.Story
 	for res.Next() {
-		if err := res.Scan(&story.Id, &story.Title, &story.Content, &story.PublishedAt, &story.CreatedAt); err != nil {
+		if err := res.Scan(&story.Id, &story.Title, &story.Content, &story.CategoryId, &story.PublishedAt, &story.CreatedAt); err != nil {
 			return nil, err
 		}
 	}

@@ -13,7 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "github.com/kodinggo/comment-service-gb1/pb/comment"
+	pbCategory "github.com/kodinggo/category-service-gb1/pb/category"
+	pbComment "github.com/kodinggo/comment-service-gb1/pb/comment"
 )
 
 func init() {
@@ -37,8 +38,9 @@ func httpServer(cmd *cobra.Command, args []string) {
 	userRepo := repository.NewUserRepository(db)
 
 	commentService := newCommentClientGRPC()
+	categoryService := newCategoryClientGRPC()
 
-	storyUsecase := usecase.NewStoryUsecase(storyRepo, commentService)
+	storyUsecase := usecase.NewStoryUsecase(storyRepo, commentService, categoryService)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Create a new Echo instance
@@ -55,7 +57,7 @@ func httpServer(cmd *cobra.Command, args []string) {
 	e.Logger.Fatal(e.Start(":3200"))
 }
 
-func newCommentClientGRPC() pb.CommentServiceClient {
+func newCommentClientGRPC() pbComment.CommentServiceClient {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
@@ -65,5 +67,18 @@ func newCommentClientGRPC() pb.CommentServiceClient {
 		log.Fatal(err)
 	}
 
-	return pb.NewCommentServiceClient(conn)
+	return pbComment.NewCommentServiceClient(conn)
+}
+
+func newCategoryClientGRPC() pbCategory.CategoryServiceClient {
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	}
+
+	conn, err := grpc.NewClient("localhost:3300", opts...)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return pbCategory.NewCategoryServiceClient(conn)
 }

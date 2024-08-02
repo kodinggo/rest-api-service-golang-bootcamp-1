@@ -37,6 +37,15 @@ type Story struct {
 	PublishedAt *time.Time `json:"published_at"`
 	CreatedAt   time.Time  `json:"created_at,omitempty"`
 	Comments    []Comment  `json:"comments"`
+	CategoryId  int64      `json:"category_id"`
+
+	Category *Category `json:"category,omitempty"`
+}
+
+// Category represents a category model
+type Category struct {
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 type Comment struct {
