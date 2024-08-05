@@ -31,11 +31,13 @@ func httpServer(cmd *cobra.Command, args []string) {
 	// Get env variables from .env file
 	config.LoadWithViper()
 
-	db := db.NewMysql()
-	defer db.Close()
+	mysql := db.NewMysql()
+	defer mysql.Close()
 
-	storyRepo := repository.NewStoryRepository(db)
-	userRepo := repository.NewUserRepository(db)
+	redis := db.NewRedis()
+
+	storyRepo := repository.NewStoryRepository(mysql, redis)
+	userRepo := repository.NewUserRepository(mysql)
 
 	commentService := newCommentClientGRPC()
 	categoryService := newCategoryClientGRPC()

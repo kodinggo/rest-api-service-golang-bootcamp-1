@@ -83,7 +83,7 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 		wg.Add(1)
 		go func(idx int, story *model.Story) {
 			defer wg.Done()
-			categoryId := strconv.Itoa(int(story.CategoryId))
+			categoryId := story.CategoryId
 
 			category, err := s.categoryService.FindCategoryById(ctx, &pbCategory.CategoryRequest{Id: categoryId})
 			if err != nil {
@@ -91,8 +91,13 @@ func (s *StoryUsecase) FindAll(ctx context.Context, filter model.StoryFilter) ([
 				return
 			}
 
+			catId, err := strconv.Atoi(category.Id)
+			if err != nil {
+				log.Error(err)
+			}
+
 			stories[idx].Category = &model.Category{
-				Id:   story.CategoryId,
+				Id:   int64(catId),
 				Name: category.Name,
 			}
 		}(idx, story)

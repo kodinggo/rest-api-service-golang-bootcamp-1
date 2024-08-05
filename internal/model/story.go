@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const StoryKey = "story"
+
 var (
 	ErrInvalidInput                 = errors.New("invalid input")
 	ErrPublishedAtLessThanCreatedAt = errors.New("published_at must be greater than created_at")
@@ -37,7 +39,7 @@ type Story struct {
 	PublishedAt *time.Time `json:"published_at"`
 	CreatedAt   time.Time  `json:"created_at,omitempty"`
 	Comments    []Comment  `json:"comments"`
-	CategoryId  int64      `json:"category_id"`
+	CategoryId  string     `json:"category_id"`
 
 	Category *Category `json:"category,omitempty"`
 }

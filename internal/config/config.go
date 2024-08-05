@@ -34,3 +34,11 @@ func GetJwtTTL() int64 {
 	}
 	return viper.GetInt64("jwt.ttl")
 }
+
+func GetRedisHost() string {
+	return viper.GetString("redis.host")
+}
+
+func GetRedisDB() int {
+	return viper.GetInt("redis.db")
+}
