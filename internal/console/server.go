@@ -6,9 +6,11 @@ import (
 	handlerHttp "kodinggo/internal/delivery/http"
 	"kodinggo/internal/repository"
 	"kodinggo/internal/usecase"
+	"kodinggo/internal/worker"
 	"log"
 
 	"github.com/labstack/echo/v4"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -36,13 +38,16 @@ func httpServer(cmd *cobra.Command, args []string) {
 
 	redis := db.NewRedis()
 
+	// Init asynq client
+	workerClient := worker.InitAsynqClient(config.GetRedisHost())
+
 	storyRepo := repository.NewStoryRepository(mysql, redis)
 	userRepo := repository.NewUserRepository(mysql)
 
 	commentService := newCommentClientGRPC()
 	categoryService := newCategoryClientGRPC()
 
-	storyUsecase := usecase.NewStoryUsecase(storyRepo, commentService, categoryService)
+	storyUsecase := usecase.NewStoryUsecase(storyRepo, commentService, categoryService, workerClient)
 	userUsecase := usecase.NewUserUsecase(userRepo)
 
 	// Create a new Echo instance
@@ -56,7 +61,24 @@ func httpServer(cmd *cobra.Command, args []string) {
 
 	handlerHttp.NewUserHandler(routeGroup, userUsecase)
 
-	e.Logger.Fatal(e.Start(":3200"))
+	errCh := make(chan error)
+
+	go func() {
+		err := e.Start(":3200")
+		if err != nil {
+			errCh <- err
+		}
+	}()
+
+	go func() {
+		err := worker.InitAsynqServer(config.GetRedisHost())
+		if err != nil {
+			errCh <- err
+		}
+	}()
+
+	err := <-errCh
+	logrus.Error(err.Error())
 }
 
 func newCommentClientGRPC() pbComment.CommentServiceClient {

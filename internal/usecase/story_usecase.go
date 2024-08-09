@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"kodinggo/internal/model"
+	"kodinggo/internal/worker"
 	"strconv"
 	"sync"
 
@@ -19,6 +20,7 @@ type StoryUsecase struct {
 	storyRepo       model.IStoryRepository
 	commentService  pbComment.CommentServiceClient
 	categoryService pbCategory.CategoryServiceClient
+	workerClient    *worker.AsynqClient
 }
 
 var v = validator.New()
@@ -28,11 +30,13 @@ func NewStoryUsecase(
 	storyRepo model.IStoryRepository,
 	commentService pbComment.CommentServiceClient,
 	categoryService pbCategory.CategoryServiceClient,
+	workerClient *worker.AsynqClient,
 ) model.IStoryUsecase {
 	return &StoryUsecase{
 		storyRepo:       storyRepo,
 		commentService:  commentService,
 		categoryService: categoryService,
+		workerClient:    workerClient,
 	}
 }
 
@@ -145,6 +149,18 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 	if err != nil {
 		log.Error(err)
 		return err
+	}
+
+	// TODO: Run this!
+	// Send task to queue
+	_, err = s.workerClient.SendEmail(worker.SendEmailPayload{
+		From:    "john@gmail.com",
+		To:      "mark@yahoo.com",
+		Subject: "Test Queue",
+		Message: "Mencoba queue messaging",
+	})
+	if err != nil {
+		log.Errorf("failed enqueue send send email task")
 	}
 
 	return nil
