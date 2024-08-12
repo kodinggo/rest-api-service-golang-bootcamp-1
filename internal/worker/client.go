@@ -25,7 +25,7 @@ func (c *AsynqClient) SendEmail(payload SendEmailPayload) (*asynq.TaskInfo, erro
 	bPayload, _ := json.Marshal(payload)
 
 	// 4. Create task
-	queueTask := asynq.NewTask(SendEmailTask, bPayload)
+	queueTask := asynq.NewTask(SendEmailTask, bPayload, asynq.Queue(CritcalQueue))
 
 	return c.client.Enqueue(queueTask)
 }
@@ -35,7 +35,7 @@ func (c *AsynqClient) UploadImage(payload UploadImagePayload) (*asynq.TaskInfo, 
 	bPayload, _ := json.Marshal(payload)
 
 	// 4. Create task
-	queueTask := asynq.NewTask(UploadImageTask, bPayload)
+	queueTask := asynq.NewTask(UploadImageTask, bPayload, asynq.Queue(DefaultQueue))
 
 	return c.client.Enqueue(queueTask)
 }

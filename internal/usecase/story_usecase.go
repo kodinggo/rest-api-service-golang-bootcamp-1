@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/labstack/gommon/log"
 	"github.com/sirupsen/logrus"
 
@@ -141,8 +142,9 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 	}
 
 	story := model.Story{
-		Title:   in.Title,
-		Content: in.Content,
+		Title:      in.Title,
+		Content:    in.Content,
+		CategoryId: uuid.NewString(), // TODO: get categoryId properly
 	}
 
 	err = s.storyRepo.Create(ctx, story)
@@ -151,7 +153,15 @@ func (s *StoryUsecase) Create(ctx context.Context, in model.CreateStoryInput) er
 		return err
 	}
 
-	// TODO: Run this!
+	// Send task to queue
+	_, err = s.workerClient.UploadImage(worker.UploadImagePayload{
+		ImageSource: "image.png",
+		TargetPath:  "img/",
+	})
+	if err != nil {
+		log.Errorf("failed enqueue send send email task")
+	}
+
 	// Send task to queue
 	_, err = s.workerClient.SendEmail(worker.SendEmailPayload{
 		From:    "john@gmail.com",

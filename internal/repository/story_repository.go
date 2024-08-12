@@ -79,7 +79,7 @@ func (s *StoryRepository) FindById(ctx context.Context, id int64) (*model.Story,
 }
 
 func (s *StoryRepository) Create(ctx context.Context, story model.Story) error {
-	_, err := s.db.ExecContext(ctx, "INSERT INTO stories (title, content) VALUES (?, ?)", story.Title, story.Content)
+	_, err := s.db.ExecContext(ctx, "INSERT INTO stories (title, content, category_id) VALUES (?, ?, ?)", story.Title, story.Content, story.CategoryId)
 	if err != nil {
 		return err
 	}

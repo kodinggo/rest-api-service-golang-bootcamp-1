@@ -8,6 +8,7 @@ import (
 	"kodinggo/internal/usecase"
 	"kodinggo/internal/worker"
 	"log"
+	"sync"
 
 	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
@@ -61,9 +62,12 @@ func httpServer(cmd *cobra.Command, args []string) {
 
 	handlerHttp.NewUserHandler(routeGroup, userUsecase)
 
-	errCh := make(chan error)
+	var wg sync.WaitGroup
+	errCh := make(chan error, 2)
+	wg.Add(2)
 
 	go func() {
+		defer wg.Done()
 		err := e.Start(":3200")
 		if err != nil {
 			errCh <- err
@@ -71,14 +75,21 @@ func httpServer(cmd *cobra.Command, args []string) {
 	}()
 
 	go func() {
+		defer wg.Done()
 		err := worker.InitAsynqServer(config.GetRedisHost())
 		if err != nil {
 			errCh <- err
 		}
 	}()
 
-	err := <-errCh
-	logrus.Error(err.Error())
+	wg.Wait()
+	close(errCh)
+
+	for err := range errCh {
+		if err != nil {
+			logrus.Error(err.Error())
+		}
+	}
 }
 
 func newCommentClientGRPC() pbComment.CommentServiceClient {
